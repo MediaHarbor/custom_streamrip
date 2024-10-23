@@ -7,9 +7,9 @@ test.py
 /urls.txt
 *.flac
 /Downloads
-/StreamripDownloads
+/custom_custom_streamripDownloads
 *.mp3
-StreamripDownloads
+custom_custom_streamripDownloads
 *.wav
 *.log
 *.mp4

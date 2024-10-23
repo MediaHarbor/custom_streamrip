@@ -4,10 +4,10 @@ import shutil
 import pytest
 from util import arun
 
-import streamrip.db as db
-from streamrip.client.downloadable import Downloadable
-from streamrip.client.qobuz import QobuzClient
-from streamrip.media.track import PendingSingle, Track
+import custom_streamrip.db as db
+from custom_streamrip.client.downloadable import Downloadable
+from custom_streamrip.client.qobuz import QobuzClient
+from custom_streamrip.media.track import PendingSingle, Track
 
 
 @pytest.mark.skipif(

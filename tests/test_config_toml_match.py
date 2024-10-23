@@ -2,12 +2,12 @@ import pytest
 import tomlkit
 from tomlkit.toml_document import TOMLDocument
 
-from streamrip.config import ConfigData
+from custom_streamrip.config import ConfigData
 
 
 @pytest.fixture()
 def toml():
-    with open("streamrip/config.toml") as f:
+    with open("custom_streamrip/config.toml") as f:
         t = tomlkit.parse(f.read())  # type: ignore
     return t
 

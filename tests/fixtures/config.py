@@ -3,7 +3,7 @@ import os
 
 import pytest
 
-from streamrip.config import Config
+from custom_streamrip.config import Config
 
 
 @pytest.fixture()

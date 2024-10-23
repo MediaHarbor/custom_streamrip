@@ -5,7 +5,7 @@ import pytest
 from mutagen.flac import FLAC
 from util import arun
 
-from streamrip.metadata import (
+from custom_streamrip.metadata import (
     AlbumInfo,
     AlbumMetadata,
     Covers,

@@ -1,6 +1,6 @@
 import pytest
 
-from streamrip.metadata import Covers
+from custom_streamrip.metadata import Covers
 
 
 @pytest.fixture()

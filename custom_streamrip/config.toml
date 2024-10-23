@@ -1,10 +1,10 @@
 [downloads]
 # Folder where tracks are downloaded to
-folder = "test_folder"
+folder = ""
 # Put Qobuz albums in a 'Qobuz' folder, Tidal albums in 'Tidal' etc.
 source_subdirectories = false
+# Put tracks in an album with 2 or more discs into a subfolder named `Disc N` 
 disc_subdirectories = true
-
 # Download (and convert) tracks all at once, instead of sequentially. 
 # If you are converting the tracks, or have fast internet, this will 
 # substantially improve processing speed.
@@ -27,13 +27,13 @@ download_booklets = true
 # Authenticate to Qobuz using auth token? Value can be true/false only
 use_auth_token = false
 # Enter your userid if the above use_auth_token is set to true, else enter your email
-email_or_userid = "test@gmail.com"
+email_or_userid = ""
 # Enter your auth token if the above use_auth_token is set to true, else enter the md5 hash of your plaintext password
-password_or_token = "test_pwd"
+password_or_token = ""
 # Do not change
-app_id = "12345"
+app_id = ""
 # Do not change
-secrets = ['secret1', 'secret2']
+secrets = []
 
 [tidal]
 # 0: 256kbps AAC, 1: 320kbps AAC, 2: 16/44.1 "HiFi" FLAC, 3: 24/44.1 "MQA" FLAC
@@ -42,14 +42,14 @@ quality = 3
 download_videos = true
 
 # Do not change any of the fields below
-user_id = "userid"
-country_code = "countrycode"
-access_token = "accesstoken"
-refresh_token = "refreshtoken"
+user_id = ""
+country_code = ""
+access_token = ""
+refresh_token = ""
 # Tokens last 1 week after refresh. This is the Unix timestamp of the expiration
 # time. If you haven't used custom_streamrip in more than a week, you may have to log
 # in again using `rip config --tidal`
-token_expiry = "tokenexpiry"
+token_expiry = ""
 
 [deezer]
 # 0, 1, or 2
@@ -59,7 +59,7 @@ quality = 2
 # An authentication cookie that allows custom_streamrip to use your Deezer account
 # See https://github.com/nathom/custom_streamrip/wiki/Finding-Your-Deezer-ARL-Cookie
 # for instructions on how to find this
-arl = "testarl"
+arl = ""
 # This allows for free 320kbps MP3 downloads from Deezer
 # If an arl is provided, deezloader is never used
 use_deezloader = true
@@ -71,8 +71,8 @@ deezloader_warnings = true
 # Only 0 is available for now
 quality = 0
 # This changes periodically, so it needs to be updated
-client_id = "clientid"
-app_version = "appversion"
+client_id = ""
+app_version = ""
 
 [youtube]
 # Only 0 is available for now
@@ -80,7 +80,7 @@ quality = 0
 # Download the video along with the audio
 download_videos = false
 # The path to download the videos to
-video_downloads_folder = "videodownloadsfolder"
+video_downloads_folder = ""
 
 [database]
 # Create a database that contains all the track IDs downloaded so far
@@ -88,11 +88,11 @@ video_downloads_folder = "videodownloadsfolder"
 # This can be disabled temporarily with the --no-db flag
 downloads_enabled = true
 # Path to the downloads database 
-downloads_path = "downloadspath"
+downloads_path = ""
 # If a download fails, the item ID is stored here. Then, `rip repair` can be
 # called to retry the downloads
 failed_downloads_enabled = true
-failed_downloads_path = "faileddownloadspath"
+failed_downloads_path = ""
 
 # Convert tracks to a codec after downloading them.
 [conversion]
@@ -109,6 +109,7 @@ bit_depth = 24
 lossy_bitrate = 320
 
 # Filter a Qobuz artist's discography. Set to 'true' to turn on a filter.
+# This will also be applied to other sources, but is not guaranteed to work correctly
 [qobuz_filters]
 # Remove Collectors Editions, live recordings, etc.
 extras = false
@@ -161,7 +162,7 @@ add_singles_to_folder = false
 folder_format = "{albumartist} - {title} ({year}) [{container}] [{bit_depth}B-{sampling_rate}kHz]"
 # Available keys: "tracknumber", "artist", "albumartist", "composer", "title",
 # and "albumcomposer", "explicit"
-track_format = "{tracknumber}. {artist} - {title}{explicit}"
+track_format = "{tracknumber:02}. {artist} - {title}{explicit}"
 # Only allow printable ASCII characters in filenames.
 restrict_characters = false
 # Truncate the filename if it is greater than this number of characters
@@ -187,4 +188,5 @@ max_search_results = 100
 [misc]
 # Metadata to identify this config file. Do not change.
 version = "2.0.6"
+# Print a message if a new version of custom_streamrip is available 
 check_for_updates = true

@@ -1,6 +1,6 @@
 import json
 
-from streamrip.metadata import AlbumMetadata, TrackMetadata
+from custom_streamrip.metadata import AlbumMetadata, TrackMetadata
 
 with open("tests/qobuz_album_resp.json") as f:
     qobuz_album_resp = json.load(f)

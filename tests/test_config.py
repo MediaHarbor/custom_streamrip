@@ -4,7 +4,7 @@ import shutil
 import pytest
 import tomlkit
 
-from streamrip.config import (
+from custom_streamrip.config import (
     ArtworkConfig,
     CliConfig,
     Config,

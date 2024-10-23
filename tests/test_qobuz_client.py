@@ -5,12 +5,12 @@ import os
 import pytest
 from util import arun
 
-from streamrip.client.downloadable import BasicDownloadable
-from streamrip.client.qobuz import QobuzClient
-from streamrip.config import Config
-from streamrip.exceptions import MissingCredentialsError
+from custom_streamrip.client.downloadable import BasicDownloadable
+from custom_streamrip.client.qobuz import QobuzClient
+from custom_streamrip.config import Config
+from custom_streamrip.exceptions import MissingCredentialsError
 
-logger = logging.getLogger("streamrip")
+logger = logging.getLogger("custom_streamrip")
 
 
 @pytest.fixture(scope="session")

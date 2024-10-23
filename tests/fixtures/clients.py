@@ -4,8 +4,8 @@ import os
 import pytest
 from util import arun
 
-from streamrip.client.qobuz import QobuzClient
-from streamrip.config import Config
+from custom_streamrip.client.qobuz import QobuzClient
+from custom_streamrip.config import Config
 
 
 @pytest.fixture(scope="session")
