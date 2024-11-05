@@ -402,6 +402,37 @@ async def lastfm(ctx, source, fallback_source, url):
             await main.resolve_lastfm(url)
             await main.rip()
 
+@rip.command()
+@click.argument("url", required=True)
+@click.pass_context
+@coro
+async def streamurl(ctx, url):
+    """Fetch stream URL for a given track URL."""
+    if ctx.obj["config"] is None:
+        return
+    with ctx.obj["config"] as cfg:
+        async with Main(cfg) as main:
+            # Add the URL to be processed
+            await main.add_all([url])
+            # Resolve and prepare the track
+            await main.resolve()
+
+            # Check the media attribute first
+            if hasattr(main, 'media') and len(main.media) > 0:
+                track = main.media[0]  # Assuming media is a list of resolved tracks
+            elif hasattr(main, 'pending') and len(main.pending) > 0:
+                track = main.pending[0]  # If 'pending' holds unresolved tracks
+            else:
+                console.print(f"No tracks found in 'media' or 'pending' for the URL: {url}")
+                return
+
+            # Fetch the stream URL
+            if hasattr(track.downloadable, "url"):
+                stream_url = track.downloadable.url
+                console.print(stream_url)
+            else:
+                console.print(f"No stream URL found for the track.")
+
 
 @rip.command()
 @click.argument("source")
