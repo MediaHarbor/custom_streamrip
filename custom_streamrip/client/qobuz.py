@@ -47,7 +47,7 @@ QOBUZ_FEATURED_KEYS = {
 class QobuzSpoofer:
     """Spoofs the information required to stream tracks from Qobuz."""
 
-    def __init__(self):
+    def __init__(self, verify_ssl: bool = True):
         """Create a Spoofer."""
         self.seed_timezone_regex = (
             r'[a-z]\.initialSeed\("(?P<seed>[\w=]+)",window\.ut'
@@ -62,6 +62,7 @@ class QobuzSpoofer:
             r'production:{api:{appId:"(?P<app_id>\d{9})",appSecret:"(\w{32})'
         )
         self.session = None
+        self.verify_ssl = verify_ssl
 
     async def get_app_id_and_secrets(self) -> tuple[str, list[str]]:
         assert self.session is not None
@@ -117,14 +118,21 @@ class QobuzSpoofer:
             ).decode("utf-8")
 
         vals: List[str] = list(secrets.values())
-        vals.remove("")
+        if "" in vals:
+            vals.remove("")
 
         secrets_list = vals
 
         return app_id, secrets_list
 
     async def __aenter__(self):
-        self.session = aiohttp.ClientSession()
+        from ..utils.ssl_utils import get_aiohttp_connector_kwargs
+
+        # For the spoofer, always use SSL verification
+        connector_kwargs = get_aiohttp_connector_kwargs(verify_ssl=True)
+        connector = aiohttp.TCPConnector(**connector_kwargs)
+
+        self.session = aiohttp.ClientSession(connector=connector)
         return self
 
     async def __aexit__(self, *_):
@@ -146,7 +154,15 @@ class QobuzClient(Client):
         self.secret: Optional[str] = None
 
     async def login(self):
-        self.session = await self.get_session()
+        self.session = await self.get_session(
+            verify_ssl=self.config.session.downloads.verify_ssl
+        )
+        """User credentials require either a user token OR a user email & password.
+
+        A hash of the password is stored in self.config.qobuz.password_or_token.
+        This data as well as the app_id is passed to self._get_user_auth_token() to get
+        the actual credentials for the user.
+        """
         c = self.config.session.qobuz
         if not c.email_or_userid or not c.password_or_token:
             raise MissingCredentialsError
@@ -163,7 +179,7 @@ class QobuzClient(Client):
             f.set_modified()
 
         self.session.headers.update({"X-App-Id": str(c.app_id)})
-        
+
         if c.use_auth_token:
             params = {
                 "user_id": c.email_or_userid,
@@ -378,28 +394,29 @@ class QobuzClient(Client):
         return pages
 
     async def _get_app_id_and_secrets(self) -> tuple[str, list[str]]:
-        async with QobuzSpoofer() as spoofer:
+        async with QobuzSpoofer(
+            verify_ssl=self.config.session.downloads.verify_ssl
+        ) as spoofer:
             return await spoofer.get_app_id_and_secrets()
+
+    async def _test_secret(self, secret: str) -> Optional[str]:
+        status, _ = await self._request_file_url("19512574", 4, secret)
+        if status == 400:
+            return None
+        if status == 200 or status == 401:
+            return secret
+        logger.warning("Got status %d when testing secret", status)
+        return None
 
     async def _get_valid_secret(self, secrets: list[str]) -> str:
         results = await asyncio.gather(
             *[self._test_secret(secret) for secret in secrets],
         )
         working_secrets = [r for r in results if r is not None]
-
         if len(working_secrets) == 0:
             raise InvalidAppSecretError(secrets)
 
         return working_secrets[0]
-
-    async def _test_secret(self, secret: str) -> Optional[str]:
-        status, _ = await self._request_file_url("19512574", 4, secret)
-        if status == 400:
-            return None
-        if status == 200:
-            return secret
-        logger.warning("Got status %d when testing secret", status)
-        return None
 
     async def _request_file_url(
         self,

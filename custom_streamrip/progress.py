@@ -1,62 +1,79 @@
 from dataclasses import dataclass
 from typing import Callable
-from rich.console import Console
-from rich.progress import Progress, TextColumn, BarColumn, TaskID
-from rich.text import Text
-import uuid
-from urllib.parse import urlparse, parse_qs
-import re
 
-console = Console()
+from rich.console import Group
+from rich.live import Live
+from rich.progress import (
+    BarColumn,
+    Progress,
+    TextColumn,
+    TimeRemainingColumn,
+    TransferSpeedColumn,
+)
+from rich.rule import Rule
+from rich.text import Text
+
+from .console import console
+
 
 class ProgressManager:
     def __init__(self):
-        self.console = Console()
-        self.tasks = {}
+        self.started = False
+        self.progress = Progress(console=console)
+        self.progress = Progress(
+            TextColumn("[cyan]{task.description}"),
+            BarColumn(bar_width=None),
+            "[progress.percentage]{task.percentage:>3.1f}%",
+            "•",
+            TransferSpeedColumn(),
+            "•",
+            TimeRemainingColumn(),
+            console=console,
+        )
+
+        self.task_titles = []
+        self.prefix = Text.assemble(("Downloading ", "bold cyan"), overflow="ellipsis")
+        self._text_cache = self.gen_title_text()
+        self.live = Live(Group(self._text_cache, self.progress), refresh_per_second=10)
 
     def get_callback(self, total: int, desc: str):
-        track_id = self.extract_track_id(desc)
-        task_id = str(uuid.uuid4())
-        self.tasks[task_id] = {"total": total, "completed": 0, "desc": desc, "track_id": track_id}
+        if not self.started:
+            self.live.start()
+            self.started = True
+
+        task = self.progress.add_task(f"[cyan]{desc}", total=total)
 
         def _callback_update(x: int):
-            self.tasks[task_id]["completed"] += x
-            self._print_progress(task_id)
+            self.progress.update(task, advance=x)
+            self.live.update(Group(self.get_title_text(), self.progress))
 
         def _callback_done():
-            self._print_progress(task_id, done=True)
-            del self.tasks[task_id]
+            self.progress.update(task, visible=False)
 
         return Handle(_callback_update, _callback_done)
 
-    def _print_progress(self, task_id: str, done: bool = False):
-        task = self.tasks[task_id]
-        percentage = (task["completed"] / task["total"]) * 100
-        status = "Completed" if done else "Downloading"
-        description = task['desc']
-        track_id = task['track_id']
-        self.console.print(f"{status}: {description} {task['completed']}/{task['total']} ({percentage:.1f}%)")
+    def cleanup(self):
+        if self.started:
+            self.live.stop()
 
     def add_title(self, title: str):
-        self.console.print(f"Added task: {title}")
+        self.task_titles.append(title.strip())
+        self._text_cache = self.gen_title_text()
 
     def remove_title(self, title: str):
-        self.console.print(f"Removed task: {title}")
+        self.task_titles.remove(title.strip())
+        self._text_cache = self.gen_title_text()
 
-    def extract_track_id(self, desc: str) -> str:
-        # For Deezer
-        deezer_match = re.search(r'media\/.*\/(\d+)', desc)
-        if deezer_match:
-            return deezer_match.group(1)
-        # For Qobuz
-        qobuz_query = parse_qs(urlparse(desc).query)
-        if 'eid' in qobuz_query:
-            return qobuz_query['eid'][0]
-        # For Tidal
-        tidal_match = re.search(r'tidal\.com/.*?/(\d+)', desc)
-        if tidal_match:
-            return tidal_match.group(1)
-        return "Unknown"
+    def gen_title_text(self) -> Rule:
+        titles = ", ".join(self.task_titles[:3])
+        if len(self.task_titles) > 3:
+            titles += "..."
+        t = self.prefix + Text(titles)
+        return Rule(t)
+
+    def get_title_text(self) -> Rule:
+        return self._text_cache
+
 
 @dataclass(slots=True)
 class Handle:
@@ -69,8 +86,10 @@ class Handle:
     def __exit__(self, *_):
         self.done()
 
+
 # global instance
 _p = ProgressManager()
+
 
 def get_progress_callback(enabled: bool, total: int, desc: str) -> Handle:
     global _p
@@ -78,13 +97,17 @@ def get_progress_callback(enabled: bool, total: int, desc: str) -> Handle:
         return Handle(lambda _: None, lambda: None)
     return _p.get_callback(total, desc)
 
+
 def add_title(title: str):
     global _p
     _p.add_title(title)
+
 
 def remove_title(title: str):
     global _p
     _p.remove_title(title)
 
+
 def clear_progress():
     global _p
+    _p.cleanup()

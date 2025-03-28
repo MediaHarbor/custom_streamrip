@@ -1,9 +1,8 @@
 import asyncio
 import logging
 import os
-import re
 from dataclasses import dataclass
-from urllib.parse import urlparse, parse_qs
+
 from .. import converter
 from ..client import Client, Downloadable
 from ..config import Config
@@ -18,14 +17,17 @@ from .semaphore import global_download_semaphore
 
 logger = logging.getLogger("custom_streamrip")
 
+
 @dataclass(slots=True)
 class Track(Media):
     meta: TrackMetadata
     downloadable: Downloadable
     config: Config
     folder: str
+    # Is None if a cover doesn't exist for the track
     cover_path: str | None
     db: Database
+    # change?
     download_path: str = ""
     is_single: bool = False
 
@@ -34,7 +36,7 @@ class Track(Media):
         os.makedirs(self.folder, exist_ok=True)
         if self.is_single:
             add_title(self.meta.title)
-    
+
     async def download(self):
         # Use the track ID from the metadata
         track_id = self.meta.info.id
@@ -72,6 +74,7 @@ class Track(Media):
                             self.downloadable.source, "track", self.meta.info.id
                         )
 
+
     async def postprocess(self):
         if self.is_single:
             remove_title(self.meta.title)
@@ -108,19 +111,6 @@ class Track(Media):
             self.folder,
             f"{track_path}.{self.downloadable.extension}",
         )
-
-    def extract_track_id(self, url: str) -> str:
-        deezer_match = re.search(r'media\/.*\/(\d+)', url)
-        if deezer_match:
-            return deezer_match.group(1)
-        qobuz_query = parse_qs(urlparse(url).query)
-        if 'eid' in qobuz_query:
-            return qobuz_query['eid'][0]
-        tidal_match = re.search(r'tidal\.com/.*?/(\d+)', url)
-        if tidal_match:
-            return tidal_match.group(1)
-        return "Unknown"
-
 
 
 @dataclass(slots=True)
